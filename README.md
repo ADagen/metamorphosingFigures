@@ -1,4 +1,6 @@
 metamorphosingFigures
 =====================
 
-use VanillaJS and canvas
+Use VanillaJS & canvas,
+welcome: http://dagenniger.ipage.com/metamorphing/
+
