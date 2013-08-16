@@ -27,32 +27,32 @@ Figure.prototype = {
 	 * @param {number} ribs кол-во рёбер, должно быть делителем detailLevel
 	 * @return {Array} of (x, y)
 	 */
-	_setRibs: function(ribs) {
+	_setEdges: function(ribs) {
 		var vertices = [],
 			points = [],
-			ribLength = this.detailLevel / ribs,
-			angleStep = Math.PI*2 / ribs;
+			edgeLength = this.detailLevel / edges,
+			angleStep = Math.PI*2 / edges;
 
 		// нахожу вершины
-		for (var rib = 0; rib < ribs; rib++) {
+		for (var edge = 0; edge < edges; edge++) {
 			vertices.push({
 				// синус и косинус намеренно перепутаны местами
 				// чтобы первый угол начинался на 12-ти часах (в самом верху)
 				// и далее вершины по часовой стрелке
 				// иначе треугольник будет на боку лежать))
-				x: Math.sin(angleStep * rib),
-				y: -Math.cos(angleStep * rib)
+				x: Math.sin(angleStep * edge),
+				y: -Math.cos(angleStep * edge)
 			});
 		}
 
 		// заполняю рёбра
 		vertices.forEach(function(vertex, index) {
-			var nextIndex = index + 1 === ribs ? 0 : index + 1,
+			var nextIndex = index + 1 === edges ? 0 : index + 1,
 				nextVertex = vertices[nextIndex],
-				xStep = (nextVertex.x - vertex.x) / ribLength,
-				yStep = (nextVertex.y - vertex.y) / ribLength;
+				xStep = (nextVertex.x - vertex.x) / edgeLength,
+				yStep = (nextVertex.y - vertex.y) / edgeLength;
 
-			for (var i = 0; i < ribLength; i++) {
+			for (var i = 0; i < edgeLength; i++) {
 				points.push({
 					x: vertex.x + xStep * i,
 					y: vertex.y + yStep * i
@@ -69,7 +69,7 @@ Figure.prototype = {
 	 * @return {Figure}
 	 */
 	setSource: function(ribs) {
-		this.source = this._setRibs(ribs);
+		this.source = this._setEdges(edges);
 		return this
 	},
 
@@ -79,7 +79,7 @@ Figure.prototype = {
 	 * @return {Figure}
 	 */
 	setTarget: function(ribs) {
-		this.target = this._setRibs(ribs);
+		this.target = this._setEdges(edges);
 		return this
 	},
 
