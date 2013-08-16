@@ -6,9 +6,11 @@ function Figure(options) {
 
 
 Figure.prototype = {
+	constructor: Figure,
 	source: [],
 	target: [],
 	current: [],
+
 	/**
 	 * Создаёт правильный многоугольник, вписанный в единичную окружность с центром в декартовом (0; 0)
 	 * @param {number} ribs кол-во рёбер, должно быть делителем detailLevel
@@ -93,12 +95,26 @@ Figure.prototype = {
 	 */
 	render: function() {
 		var context = this.ctx;
+		this.dirtyRect = {
+			minX: Infinity,
+			minY: Infinity,
+			maxX: -Infinity,
+			maxY: -Infinity
+		};
 
 		context.beginPath();
 
 		this.current.forEach(function(point) {
-			context.lineTo(point.x * 100 + 500, point.y * 100 + 500);
-		});
+			var x = point.x * 100 + 500,
+				y = point.y * 100 + 500;
+
+			this.dirtyRect.minX = Math.min(this.dirtyRect.minX, x);
+			this.dirtyRect.maxX = Math.max(this.dirtyRect.maxX, x);
+			this.dirtyRect.minY = Math.min(this.dirtyRect.minY, y);
+			this.dirtyRect.maxY = Math.max(this.dirtyRect.maxY, y);
+
+			context.lineTo(x, y);
+		}.bind(this));
 
 		context.closePath();
 		context.lineWidth = 1;
@@ -108,7 +124,18 @@ Figure.prototype = {
 		return this
 	},
 
+	/**
+	 * Стирает фигуру
+	 * @return {Figure}
+	 */
 	clear: function() {
-
+		// магические единички для стирания сглаживания (сглаживание канваса распространяется на соседние пиксели)
+		this.ctx.clearRect(
+			this.dirtyRect.minX - 1,
+			this.dirtyRect.minY - 1,
+			this.dirtyRect.maxX + 1,
+			this.dirtyRect.maxY + 1
+		);
+		return this
 	}
 };
