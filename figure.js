@@ -10,6 +10,12 @@ Figure.prototype = {
 	source: [],
 	target: [],
 	current: [],
+	radius: 1,
+	left: 0,
+	top: 0,
+	sourceColor: [0,0,0],
+	currentColor: [0,0,0],
+	targetColor: [0,0,0],
 
 	/**
 	 * Создаёт правильный многоугольник, вписанный в единичную окружность с центром в декартовом (0; 0)
@@ -74,6 +80,45 @@ Figure.prototype = {
 	},
 
 	/**
+	 * Случайный цвет
+	 * @return {Array}
+	 */
+	_getRandomColor: function() {
+		var newColor = [];
+		for (var i = 0; i < 3; i++) newColor[i] = Math.floor(Math.random() * 256);
+		return newColor
+	},
+
+	/**
+	 * Ставит случайный начальный цвет
+	 * @return {Figure}
+	 */
+	setRandomSourceColor: function() {
+		this.sourceColor = this._getRandomColor();
+		return this
+	},
+
+	/**
+	 * Ставит случайный начальный цвет
+	 * @return {Figure}
+	 */
+	setRandomTargetColor: function() {
+		this.targetColor = this._getRandomColor();
+		return this
+	},
+
+	/**
+	 * Устанавливает новое значение
+	 * @param {*} key
+	 * @param {*} value
+	 * @return {Figure}
+	 */
+	setValue: function(key, value) {
+		this[key] = value;
+		return this
+	},
+
+	/**
 	 * Создаёт промежуточный многоугольник
 	 * заполняет this.current актуальными значениями
 	 * @param {number} progress должен быть в интервале [0; 1]
@@ -89,12 +134,24 @@ Figure.prototype = {
 		return this
 	},
 
+	interpolateColor: function(progress) {
+		for (var i = 0; i < 3; i++) {
+			this.currentColor[i] = Math.floor(this.sourceColor[i] + progress * (this.targetColor[i] - this.sourceColor[i]));
+		}
+		return this
+	},
+
 	/**
 	 * Рисует фигуру
 	 * @return {Figure}
 	 */
 	render: function() {
-		var context = this.ctx;
+		var context = this.ctx,
+			r = this.currentColor[0],
+			g = this.currentColor[1],
+			b = this.currentColor[2],
+			color = 'rgba(' + r + ', ' + g + ', ' + b + ', 1)';
+
 		this.dirtyRect = {
 			minX: Infinity,
 			minY: Infinity,
@@ -102,11 +159,12 @@ Figure.prototype = {
 			maxY: -Infinity
 		};
 
+		context.save();
 		context.beginPath();
 
 		this.current.forEach(function(point) {
-			var x = point.x * 100 + 500,
-				y = point.y * 100 + 500;
+			var x = point.x * this.radius + this.left,
+				y = point.y * this.radius + this.top;
 
 			this.dirtyRect.minX = Math.min(this.dirtyRect.minX, x);
 			this.dirtyRect.maxX = Math.max(this.dirtyRect.maxX, x);
@@ -118,8 +176,10 @@ Figure.prototype = {
 
 		context.closePath();
 		context.lineWidth = 1;
-		context.fillStyle = 'blue';
+		context.strokeStyle = color;
+		context.fillStyle = color;
 		context.fill();
+		context.restore();
 
 		return this
 	},

@@ -7,16 +7,15 @@
 		phase = 0, // 0 - от ромба до треугольника, 1 - от треугольника до круга
 		oldScrollPos = -1,
 		currentScrollPos = 0,
-		touchSensitivity = 100, // сколько пикселей при touchmove равны одному шелчку колёсика
+		touchSensitivity = 150, // сколько пикселей при touchmove равны одному шелчку колёсика
 
-		// ниже размеры относительно вьюпорта
-		figureWidth = 0.2, // 20% от самой маленькой стороны экрана
-
+		// положение фигуры:
+		figureWidth = 0.1, // 10% от самой маленькой стороны экрана
+		xPos = 0.5, // в центре экрана по горизонтали
 		startYPos = 0.2,
-		currentYPos = 0.2,
+		yPos = 0.2,
 		endYPos = 0.8,
 
-		xPos = 0.5, // в центре экрана по горизонтали
 
 		// измеряется в засечках на колёсике мышки
 		scrollPhase = [{
@@ -28,9 +27,16 @@
 		}],
 
 		figure = (new Figure({
-			detailLevel: 60,
-			ctx: ctx
-		})).setSource(4).setTarget(3).interpolate(0).render();
+				detailLevel: 60,
+				ctx: ctx
+			}))
+			.setSource(4)
+			.setTarget(3)
+			.interpolate(0)
+			.setRandomSourceColor()
+			.setRandomTargetColor()
+			.interpolateColor(0)
+			.render();
 
 
 	//
@@ -57,12 +63,16 @@
 				.setTarget(3);
 		}
 
+		if (currentScrollPos == scrollPhase[1].end) figure.setRandomSourceColor();
+		if (currentScrollPos == scrollPhase[0].start) figure.setRandomTargetColor();
+
 		// интерполировать относительно только текущей фазы
 		var actual = currentScrollPos - scrollPhase[phase].start,
 			range =  scrollPhase[phase].end - scrollPhase[phase].start;
 
 		figure
 			.interpolate(actual/range)
+			.interpolateColor(currentScrollPos/scrollPhase[1].end)
 			.clear()
 			.render();
 	}
@@ -76,7 +86,12 @@
 			canvas.width = width;
 			canvas.height = height;
 
-			figure.render();
+			figure
+				.setValue('left', width * xPos)
+				.setValue('top', height * yPos)
+				.setValue('radius', Math.min(width, height) * figureWidth)
+				.clear()
+				.render();
 		}
 
 		var timeout = false;
@@ -116,7 +131,6 @@
 
 	// поддержка тачскринов
 	(function() {
-
 		document.addEventListener("touchmove",   touchMoveHandler);
 		document.addEventListener("touchstart",   touchStartHandler);
 
