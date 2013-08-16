@@ -159,7 +159,7 @@
 			var y = e.changedTouches[0].clientY || e.changedTouches[0].pageY,
 				deltaY = y - oldY;
 
-			currentScrollPos -= deltaY * touchSensitivity;
+			currentScrollPos += deltaY * touchSensitivity;
 			transmission();
 
 			e.preventDefault && e.preventDefault();
