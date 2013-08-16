@@ -24,10 +24,10 @@ Figure.prototype = {
 
 	/**
 	 * Создаёт правильный многоугольник, вписанный в единичную окружность с центром в декартовом (0; 0)
-	 * @param {number} ribs кол-во рёбер, должно быть делителем detailLevel
+	 * @param {number} edges кол-во рёбер, должно быть делителем detailLevel
 	 * @return {Array} of (x, y)
 	 */
-	_setEdges: function(ribs) {
+	_setEdges: function(edges) {
 		var vertices = [],
 			points = [],
 			edgeLength = this.detailLevel / edges,
@@ -65,20 +65,20 @@ Figure.prototype = {
 
 	/**
 	 * Заполняет исходную фигуру
-	 * @param {number} ribs кол-во рёбер, должно быть делителем detailLevel
+	 * @param {number} edges кол-во рёбер, должно быть делителем detailLevel
 	 * @return {Figure}
 	 */
-	setSource: function(ribs) {
+	setSource: function(edges) {
 		this.source = this._setEdges(edges);
 		return this
 	},
 
 	/**
 	 * Заполняет конечную фигуру
-	 * @param {number} ribs кол-во рёбер, должно быть делителем detailLevel
+	 * @param {number} edges кол-во рёбер, должно быть делителем detailLevel
 	 * @return {Figure}
 	 */
-	setTarget: function(ribs) {
+	setTarget: function(edges) {
 		this.target = this._setEdges(edges);
 		return this
 	},
