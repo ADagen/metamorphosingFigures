@@ -1,19 +1,21 @@
 (function() {
 
-	var canvas = document.getElementsByTagName('canvas')[0],
+	var stats = new Stats(),
+		canvas = document.getElementsByTagName('canvas')[0],
 		ctx = canvas.getContext('2d'),
 		width = 0,
 		height = 0,
 		phase = 0, // 0 - от ромба до треугольника, 1 - от треугольника до круга
 		oldScrollPos = -1,
 		currentScrollPos = 0,
-		touchSensitivity = 150, // сколько пикселей при touchmove равны одному шелчку колёсика
+
+		touchSensitivity = 0.005, // сколько пикселей при touchmove равны одному шелчку колёсика
+		maxWheelFrames = 4, // сколько кадров в анимации после события колёсика мыши
 
 		// положение фигуры:
 		figureWidth = 0.1, // 10% от самой маленькой стороны экрана
 		xPos = 0.5, // в центре экрана по горизонтали
 		startYPos = 0.2,
-		yPos = 0.2,
 		endYPos = 0.8,
 
 
@@ -38,13 +40,18 @@
 			.interpolateColor(0)
 			.render();
 
+	stats.setMode(1); // 0: fps, 1: ms
+	document.body.appendChild(stats.domElement);
+	stats.domElement.style.position = 'absolute';
+	stats.domElement.style.left = '0px';
+	stats.domElement.style.top = '0px';
 
 	//
-	function transmission() {
+	function transmission(forced) {
 		currentScrollPos = Math.max(currentScrollPos, scrollPhase[0].start);
 		currentScrollPos = Math.min(currentScrollPos, scrollPhase[1].end);
 
-		if (oldScrollPos === currentScrollPos) { return	}
+		if (oldScrollPos === currentScrollPos && !forced) return;
 		oldScrollPos = currentScrollPos;
 
 		// окончание первой фазы
@@ -70,11 +77,15 @@
 		var actual = currentScrollPos - scrollPhase[phase].start,
 			range =  scrollPhase[phase].end - scrollPhase[phase].start;
 
+		stats.begin();
 		figure
 			.interpolate(actual/range)
 			.interpolateColor(currentScrollPos/scrollPhase[1].end)
-			.clear()
+			.setValue('left', width * xPos)
+			.setValue('top', height * ((endYPos - startYPos) * (currentScrollPos/scrollPhase[1].end) + startYPos))
+			.setValue('radius', Math.min(width, height) * figureWidth)
 			.render();
+		stats.end();
 	}
 
 
@@ -86,12 +97,7 @@
 			canvas.width = width;
 			canvas.height = height;
 
-			figure
-				.setValue('left', width * xPos)
-				.setValue('top', height * yPos)
-				.setValue('radius', Math.min(width, height) * figureWidth)
-				.clear()
-				.render();
+			transmission('forced');
 		}
 
 		var timeout = false;
@@ -118,12 +124,16 @@
 
 		function MouseWheelHandler(event) {
 			var e = window.event || event,
-				delta = Math.max(-1, Math.min(1, (e.wheelDelta || -e.detail)));
+				delta = Math.max(-1, Math.min(1, (e.wheelDelta || -e.detail))),
+				frames = 0,
+				timerId = setInterval(function() {
+					if (frames >= maxWheelFrames) clearInterval(timerId);
+					frames++;
+					currentScrollPos += delta / 4;
+					transmission();
+				}, 10);
 
-			currentScrollPos += delta;
-			transmission();
-
-			e.preventDefault();
+			e.preventDefault && e.preventDefault();
 			return false
 		}
 	} ());
@@ -144,15 +154,15 @@
 		function touchMoveHandler(e) {
 			if (timeout) return;
 			timeout = true;
-			setTimeout(function() { timeout = false }, 50);
+			setTimeout(function() { timeout = false }, 10);
 
 			var y = e.changedTouches[0].clientY || e.changedTouches[0].pageY,
 				deltaY = y - oldY;
 
-			currentScrollPos -= deltaY / touchSensitivity;
+			currentScrollPos -= deltaY * touchSensitivity;
 			transmission();
 
-			e.preventDefault();
+			e.preventDefault && e.preventDefault();
 			return false
 		}
 

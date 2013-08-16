@@ -2,20 +2,25 @@ function Figure(options) {
 	this.options = options;
 	this.detailLevel = options.detailLevel;
 	this.ctx = options.ctx;
+
+	// отменить в IE9, там всё равно нет RAF()
+	if (!document.all) this._initRender();
 }
 
 
 Figure.prototype = {
-	constructor: Figure,
-	source: [],
-	target: [],
-	current: [],
-	radius: 1,
-	left: 0,
-	top: 0,
-	sourceColor: [0,0,0],
+	constructor : Figure,
+	source      : [],
+	target      : [],
+	current     : [],
+	radius      : 1,
+	left        : 0,
+	top         : 0,
+	sourceColor : [0,0,0],
 	currentColor: [0,0,0],
-	targetColor: [0,0,0],
+	targetColor : [0,0,0],
+	bottomBound : 0,
+	topBound    : 0,
 
 	/**
 	 * Создаёт правильный многоугольник, вписанный в единичную окружность с центром в декартовом (0; 0)
@@ -30,14 +35,13 @@ Figure.prototype = {
 
 		// нахожу вершины
 		for (var rib = 0; rib < ribs; rib++) {
-			//console.log(rib);
 			vertices.push({
 				// синус и косинус намеренно перепутаны местами
 				// чтобы первый угол начинался на 12-ти часах (в самом верху)
 				// и далее вершины по часовой стрелке
 				// иначе треугольник будет на боку лежать))
 				x: Math.sin(angleStep * rib),
-				y: Math.cos(angleStep * rib)
+				y: -Math.cos(angleStep * rib)
 			});
 		}
 
@@ -146,6 +150,31 @@ Figure.prototype = {
 	 * @return {Figure}
 	 */
 	render: function() {
+		this._render();
+		return this
+	},
+
+	/**
+	 * Инициализация рендера, вызывается в конструкторе автоматически
+	 */
+	_initRender: function() {
+		var vendors = ['ms', 'moz', 'webkit', 'o'];
+
+		for (var i = 0; i < vendors.length && !window.requestAnimationFrame; ++i) {
+			window.requestAnimationFrame = window[vendors[i] + 'RequestAnimationFrame'];
+		}
+
+		if (window.requestAnimationFrame) {
+			this.render = function() {
+				window.requestAnimationFrame(this._render.bind(this));
+				return this
+			}.bind(this)
+		}
+	},
+
+	_render: function() {
+		this.clear();
+
 		var context = this.ctx,
 			r = this.currentColor[0],
 			g = this.currentColor[1],
@@ -190,7 +219,7 @@ Figure.prototype = {
 	 */
 	clear: function() {
 		// магические единички для стирания сглаживания (сглаживание канваса распространяется на соседние пиксели)
-		this.ctx.clearRect(
+		this.dirtyRect && this.ctx.clearRect(
 			this.dirtyRect.minX - 1,
 			this.dirtyRect.minY - 1,
 			this.dirtyRect.maxX + 1,
