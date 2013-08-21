@@ -1,7 +1,7 @@
 metamorphosingFigures
 =====================
 
-VanillaJS & canvas,
-You are welcome: http://dagenniger.ipage.com/metamorphing/
+VanillaJS & canvas,  
+You are welcome: http://dagenniger.ipage.com/metamorphing/  
 Use mouse wheel or your fingers with touchscreen to move figure.
 
