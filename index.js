@@ -9,8 +9,9 @@
 		oldScrollPos = -1,
 		currentScrollPos = 0,
 
+		scrollSensitivity = 0.4, // чувствительно скролла, больше значит быстрее
 		touchSensitivity = 0.005, // сколько пикселей при touchmove равны одному шелчку колёсика
-		maxWheelFrames = 4, // сколько кадров в анимации после события колёсика мыши
+		maxWheelFrames = 30, // сколько кадров в анимации после события колёсика мыши
 
 		// положение фигуры:
 		figureWidth = 0.1, // 10% от самой маленькой стороны экрана
@@ -123,16 +124,28 @@
 		canvas.addEventListener("mousewheel", MouseWheelHandler, false);
 		canvas.addEventListener("DOMMouseScroll", MouseWheelHandler, false);
 
+		var timeout = false,
+			timerId = 0; // таймер торможения фигуры
+
 		function MouseWheelHandler(event) {
+			clearInterval(timerId);
+
 			var e = window.event || event,
 				delta = Math.max(-1, Math.min(1, (e.wheelDelta || -e.detail))),
-				frames = 0,
-				timerId = setInterval(function() {
-					if (frames >= maxWheelFrames) clearInterval(timerId);
-					frames++;
-					currentScrollPos -= delta / 4;
-					transmission();
-				}, 10);
+				frames = 0;
+
+			timerId = setInterval(function() {
+				if (timeout) return;
+				timeout = true;
+				setTimeout(function() { timeout = false }, 10);
+
+				if (frames++ >= maxWheelFrames) clearInterval(timerId);
+
+				// скорость линейно уменьшается (зависит от времени)
+				var speed = (maxWheelFrames - frames) / maxWheelFrames;
+				currentScrollPos -= scrollSensitivity * delta * speed;
+				transmission();
+			}, 15);
 
 			e.preventDefault && e.preventDefault();
 			return false
