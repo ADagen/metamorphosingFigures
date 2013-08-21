@@ -18,7 +18,6 @@
 		startYPos = 0.2,
 		endYPos = 0.8,
 
-
 		// измеряется в засечках на колёсике мышки
 		scrollPhase = [{
 			start: 0,
@@ -34,11 +33,8 @@
 			}))
 			.setSource(4)
 			.setTarget(3)
-			.interpolate(0)
 			.setRandomSourceColor()
-			.setRandomTargetColor()
-			.interpolateColor(0)
-			.render();
+			.setRandomTargetColor();
 
 	stats.setMode(1); // 0: fps, 1: ms
 	document.body.appendChild(stats.domElement);
@@ -46,13 +42,18 @@
 	stats.domElement.style.left = '0px';
 	stats.domElement.style.top = '0px';
 
-	//
+	/**
+	 * Перерисовывает фигуру (при необходимости)
+	 * @param {*} forced - при неотрицательном параметре принудительно перерисовывает фигуру
+	 */
 	function transmission(forced) {
 		currentScrollPos = Math.max(currentScrollPos, scrollPhase[0].start);
 		currentScrollPos = Math.min(currentScrollPos, scrollPhase[1].end);
 
 		if (oldScrollPos === currentScrollPos && !forced) return;
 		oldScrollPos = currentScrollPos;
+
+		stats.begin();
 
 		// окончание первой фазы
 		if (currentScrollPos > scrollPhase[0].end && phase === 0) {
@@ -70,14 +71,13 @@
 				.setTarget(3);
 		}
 
-		if (currentScrollPos == scrollPhase[1].end) figure.setRandomSourceColor();
+		if (currentScrollPos == scrollPhase[1].end)   figure.setRandomSourceColor();
 		if (currentScrollPos == scrollPhase[0].start) figure.setRandomTargetColor();
 
 		// интерполировать относительно только текущей фазы
 		var actual = currentScrollPos - scrollPhase[phase].start,
 			range =  scrollPhase[phase].end - scrollPhase[phase].start;
 
-		stats.begin();
 		figure
 			.interpolate(actual/range)
 			.interpolateColor(currentScrollPos/scrollPhase[1].end)
@@ -85,6 +85,7 @@
 			.setValue('top', height * ((endYPos - startYPos) * (currentScrollPos/scrollPhase[1].end) + startYPos))
 			.setValue('radius', Math.min(width, height) * figureWidth)
 			.render();
+
 		stats.end();
 	}
 
@@ -129,7 +130,7 @@
 				timerId = setInterval(function() {
 					if (frames >= maxWheelFrames) clearInterval(timerId);
 					frames++;
-					currentScrollPos += delta / 4;
+					currentScrollPos -= delta / 4;
 					transmission();
 				}, 10);
 
@@ -152,16 +153,16 @@
 		}
 
 		function touchMoveHandler(e) {
-			if (timeout) return;
-			timeout = true;
-			setTimeout(function() { timeout = false }, 10);
+			if (!timeout) {
+				timeout = true;
+				setTimeout(function() { timeout = false }, 10);
 
-			var y = e.changedTouches[0].clientY || e.changedTouches[0].pageY,
-				deltaY = y - oldY;
+				var y = e.changedTouches[0].clientY || e.changedTouches[0].pageY,
+					deltaY = y - oldY;
 
-			currentScrollPos -= deltaY * touchSensitivity;
-			transmission();
-
+				currentScrollPos -= deltaY * touchSensitivity;
+				transmission();
+			}
 			e.preventDefault && e.preventDefault();
 			return false
 		}
